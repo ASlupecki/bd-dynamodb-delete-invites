@@ -23,6 +23,7 @@ public class EventDao {
 
     /**
      * Creates an EventDao with the given DDB mapper.
+     *
      * @param mapper DynamoDBMapper
      */
     @Inject
@@ -32,6 +33,7 @@ public class EventDao {
 
     /**
      * Gets an event by ID.
+     *
      * @param eventId The ID of the event to look up
      * @return the Event
      */
@@ -43,6 +45,7 @@ public class EventDao {
      * Gets a collection of events for a Collection of event IDs.
      * No guarantee of the order/size of result is provided (e.g. in
      * case some of the IDs are not found).
+     *
      * @param eventIds The (Collection of) IDs to fetch events for
      * @return List of Events (those found from the IDs provided)
      */
@@ -50,21 +53,22 @@ public class EventDao {
         Map<Class<?>, List<KeyPair>> classAndKeys = new HashMap<>();
 
         List<KeyPair> keysList = eventIds.stream()
-            .distinct()
-            .map(eventId -> new KeyPair().withHashKey(eventId))
-            .collect(Collectors.toList());
+                .distinct()
+                .map(eventId -> new KeyPair().withHashKey(eventId))
+                .collect(Collectors.toList());
         classAndKeys.put(Event.class, keysList);
         List<Object> results = mapper.batchLoad(classAndKeys).values().iterator().next();
 
         // DynamoDB guarantees that we can cast the Objects that come
         // back to the class mapped provided above
         return results.stream()
-            .map(object -> (Event) object)
-            .collect(Collectors.toList());
+                .map(object -> (Event) object)
+                .collect(Collectors.toList());
     }
 
     /**
      * Creates a new event.
+     *
      * @param event The event to create
      * @return the created event
      */
@@ -78,14 +82,15 @@ public class EventDao {
 
     /**
      * Cancels an existing event by ID.
+     *
      * @param eventId The event ID of the event to cancel
      * @return the updated state of the event
      */
     public Event cancelEvent(String eventId) {
-        // PARTICIPANTS: replace this implementation to perform a soft delete
-        Event canceledEvent = new Event();
-        canceledEvent.setId(eventId);
-        mapper.delete(canceledEvent);
-        return null;
+        Event event = mapper.load(Event.class, eventId);
+        event.setCanceled(true);
+        mapper.save(event);
+        return event;
     }
 }
+
